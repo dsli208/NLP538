@@ -32,7 +32,8 @@ import loss_func as tf_func
 import pickle
 from collections import namedtuple
 
-
+# import warnings
+# warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 Word2Vec = namedtuple('Word2Vec', ['train_inputs', 'train_labels', 'loss', 'optimizer', 'global_step',
@@ -118,32 +119,80 @@ def generate_batch(data, batch_size, num_skips, skip_window):
 
   """
 
-  global data_index
+  global data_index # MUST USE THIS TO ITERATE
+  global batch_index
   assert batch_size % num_skips == 0
   assert num_skips <= 2 * skip_window
   batch = np.ndarray(shape=(batch_size), dtype=np.int32)
   labels = np.ndarray(shape=(batch_size, 1), dtype=np.int32)
 
+  # batch_index = 0
+
+  # print("batch size")
+  # print(batch_size)
+  # print("num skips")
+  # print(num_skips)
+  # print("data index")
+  # print(data_index)
+  # print("batch index")
+  # print(batch_index)
+  # print("len of data")
+  # print(len(data))
+  # print("-------")
+  # print(batch)
+  # print(labels)
+
   window_size = skip_window * 2 + 1
+  batch_list = []
+  labels_list = []
   training_pairs_master = []
   context_words = []
 
-  i = 0, j = 0
-  while i in range(0, len(data) - window_size) and j < batch_size: # and while # batces < batch_size
-      window = data[i : i + window_size]
-      context_word = data[i + skip_window]
+  i = 0
+  j = 0
+  while data_index < (len(data) - window_size) and batch_index < batch_size: # and while # batces < batch_size
+      window = data[data_index : data_index + window_size]
+      # print("window")
+      # print(window)
+      context_word = data[data_index + skip_window]
       context_words.append(context_word)
 
       # How to get the training examples?
       training_pairs = generate_training_pairs(context_word, window)
       for t in training_pairs:
-          training_pairs_master.append(t)
-          j += 1
-          if j == batch_size:
+          # if t[0] not in context_words:
+          # print(t[0])
+          # print(t[1])
+          batch_list.append(t[0])
+          labels_list.append([t[1]])
+          batch[batch_index] = t[0]
+          labels[batch_index] = [t[1]]
+
+          batch_index += 1
+          # print("batch_index is " + str(batch_index))
+          if batch_index == batch_size:
               break
 
-      i += 1
-  np.append(batch, training_pairs_master)
+      data_index += 1
+
+  # print("data index at end")
+  # print(data_index)
+  # print("batch index at end")
+  # print(batch_index)
+  # print("Batches")
+  # print(batch_list)
+  # print("Labels")
+  # print(labels_list)
+
+  # batch = np.array(batch_list)
+  # labels = np.array(labels_list)
+
+  # print(batch)
+  # print(labels)
+
+  # print("End of batch generation")
+  # batch_index = 0
+  return batch, labels
 
   """"
   =================================================================================
@@ -214,6 +263,8 @@ def build_model(sess, graph, loss_model):
           tf.truncated_normal([vocabulary_size, embedding_size],
                               stddev=1.0 / math.sqrt(embedding_size)))
 
+      # sm_weights = tf.Print(sm_weights, [sm_weights], 'smweights: ', summarize=32)
+
       # Get context embeddings from lables
       true_w = tf.nn.embedding_lookup(sm_weights, train_labels)
       true_w = tf.reshape(true_w, [-1, embedding_size])
@@ -282,7 +333,12 @@ def train(sess, model, data, dictionary, batch_size, num_skips, skip_window,
 
   average_loss = 0
   for step in xrange(max_num_steps):
+    # print("step")
+    # print(step)
+    global batch_index
+
     batch_inputs, batch_labels = generate_batch(data, batch_size, num_skips, skip_window)
+    batch_index = 0
     feed_dict = {model.train_inputs.name: batch_inputs, model.train_labels.name: batch_labels}
 
     # We perform one update step by evaluating the optimizer op (including it
@@ -291,6 +347,8 @@ def train(sess, model, data, dictionary, batch_size, num_skips, skip_window,
     _, loss_val = sess.run([model.optimizer, model.loss], feed_dict=feed_dict)
     average_loss += loss_val
 
+    # print("average loss")
+    # print(average_loss_step)
     if step % average_loss_step == 0:
       if step > 0:
         average_loss /= average_loss_step
@@ -328,6 +386,8 @@ def train(sess, model, data, dictionary, batch_size, num_skips, skip_window,
 
 if __name__ == '__main__':
 
+  # tf.enable_eager_execution()
+
   loss_model = 'cross_entropy'
   if len(sys.argv) > 1:
     if sys.argv[1] == 'nce':
@@ -359,20 +419,21 @@ if __name__ == '__main__':
   unigram_prob = [c*1.0/total for c in unigram_cnt]
 
   data_index = 0
-
+  batch_index = 0
 
   ####################################################################################
   # Step 3: Test the function that generates a training batch for the skip-gram model.
   #         TODO You must implement this method "generate_batch"
   #         Uncomment below to check batch output
+  ####################################################################################
 
   # batch, labels = generate_batch(data, batch_size=8, num_skips=2, skip_window=1)
   # for i in range(8):
-  #   print(batch[i], reverse_dictionary[batch[i]],
-  #         '->', labels[i, 0], reverse_dictionary[labels[i, 0]])
+     # print(batch[i], reverse_dictionary[batch[i]],
+           # '->', labels[i, 0], reverse_dictionary[labels[i, 0]])
 
 
-  ####################################################################################
+
   # Hyper Parameters to config
   batch_size = 128
   embedding_size = 128  # Dimension of the embedding vector.
@@ -427,4 +488,4 @@ if __name__ == '__main__':
     maybe_create_path(model_path)
     model_filepath = os.path.join(model_path, 'word2vec_%s.model'%(loss_model))
     print("Saving word2vec model as [%s]"%(model_filepath))
-    pickle.dump([dictionary, trained_steps, embeddings], open(model_filepath, 'w'))
+    pickle.dump([dictionary, trained_steps, embeddings], open(model_filepath, 'wb'))
