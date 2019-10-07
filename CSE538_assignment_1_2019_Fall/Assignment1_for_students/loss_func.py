@@ -104,7 +104,7 @@ def nce_loss(inputs, weights, biases, labels, sample, unigram_prob):
         # p_w_o.append(k * unigram_prob[labels[i]])
     # pre_sigma_o = s_o - math.log(k * unigram_prob[labels[i]])
     # HOW TO MULTIPLY UNIGRAMPROBLABELS BY K?
-    pre_sigma_o = tf.subtract(s_o, tf.log(unigram_prob_labels))
+    pre_sigma_o = tf.subtract(s_o, tf.scalar_mul(k, tf.log(unigram_prob_labels)))
 
     # Values complimenting u_x
     b_x = tf.gather(biases, sample)
@@ -117,7 +117,7 @@ def nce_loss(inputs, weights, biases, labels, sample, unigram_prob):
         # p_w_x_.append(k * unigram_prob[samples[i]])
 
     # Subtractions: s_o - p_w_o and s_x - p_w_x
-    pre_sigma_x = tf.subtract(s_x, tf.log(unigram_prob_labels))
+    pre_sigma_x = tf.subtract(s_x, tf.scalar_mul(k, tf.log(unigram_prob_labels)))
 
     # pre_sigma_x = s_x - math.log(k * unigram_prob[samples[i]]) for i in range(len(samples))
     # A = log(sigma(s_o) - log(num_sampled * P(w_o)))
@@ -127,4 +127,12 @@ def nce_loss(inputs, weights, biases, labels, sample, unigram_prob):
     p_sigma_o = tf.sigmoid(pre_sigma_o)
     p_sigma_x = tf.sigmoid(pre_sigma_x)
 
-    return tf.subtract(D, E)
+    print(p_sigma_o)
+    print(p_sigma_x)
+
+    o = tf.diag_part(p_sigma_o)
+    x = tf.reduce_sum(p_sigma_x, 1, keep_dims=True)
+
+    # retval = tf.scalar_mul(-1, tf.add(o, x))
+
+    return tf.add(o, x)
