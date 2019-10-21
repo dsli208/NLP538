@@ -435,11 +435,13 @@ if __name__ == '__main__':
 
 
   # Hyper Parameters to config
-  batch_size = 128
-  embedding_size = 128  # Dimension of the embedding vector.
-  skip_window = 4       # How many words to consider left and right.
-  num_skips = 8         # How many times to reuse an input to generate a label.
-
+  batch_size = 64 # VARIED
+  embedding_size = 64  # Dimension of the embedding vector.
+  # skip_window = 14      # How many words to consider left and right.
+  skip_window = 4
+  # Varying skip window causes decrease for NCE
+  num_skips = 8 # How many times to reuse an input to generate a label.
+  # Varying num_skips
 
   # We pick a random validation set to sample nearest neighbors. Here we limit the
   # validation samples to the words that have a low numeric ID, which by
@@ -460,6 +462,8 @@ if __name__ == '__main__':
   max_num_steps  = 200001
   checkpoint_step = 50000
 
+  # max_num_steps = 500000
+  # Not much of an effect for varying this
 
   graph = tf.Graph()
   with tf.Session(graph=graph) as sess:

@@ -31,10 +31,12 @@ v1 = embeddings[dictionary[word_id]]
 ==========================================================================
 """
 # examples || map
-filename = './word_analogy_test.txt'
+filename = './word_analogy_dev.txt'
 
 with open(filename) as f:
     line = f.readline()
+
+    output = []
 
     while line:
         # Strip trailing newline
@@ -87,4 +89,41 @@ with open(filename) as f:
             choice_diff_list.append(c_diff)
 
         cs = cosine_similarity(example_diff_list, choice_diff_list)
-        print(cs)
+        # print(cs)
+        # print(cs[0])
+
+        avg_cs = []
+        for i in range(0, len(cs[0])):
+            sum_i = 0
+            for j in range(0, len(cs)):
+                sum_i += cs[j][i]
+            avg_i = float(sum_i) / len(cs[0])
+            avg_cs.append(avg_i)
+
+        print(avg_cs)
+
+        least_similar_pair = choices[avg_cs.index(min(avg_cs))]
+        most_similar_pair = choices[avg_cs.index(max(avg_cs))]
+
+        print(least_similar_pair)
+        print(most_similar_pair)
+
+        choice_str = ""
+        for c in choices:
+            print(c)
+            choice_str += c + " "
+
+        output.append(choice_str + " " + least_similar_pair + " " + most_similar_pair)
+
+        line = f.readline()
+
+if loss_model == 'cross_entropy':
+    output_file = "test_dev_ce.txt"
+elif loss_model == "nce":
+    output_file = "test_dev_nce.txt"
+
+f_o = open(output_file, 'w')
+for l2 in output:
+    f_o.write(l2 + "\n")
+
+f_o.close()
