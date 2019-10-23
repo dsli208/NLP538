@@ -96,13 +96,6 @@ class DanSequenceToVector(SequenceToVector):
              training=False) -> tf.Tensor:
         # TODO(students): start
 
-
-        # print("Vector Sequence")
-        # print(vector_sequence)
-
-        # print("Sequence Mask")
-        # print(sequence_mask)
-
         if training:
             # Drop out - want to turn off some neurons in the NN
             # Some inputs we want to ignore
@@ -111,8 +104,6 @@ class DanSequenceToVector(SequenceToVector):
             a = tf.constant(1, shape=vector_sequence.shape, dtype=tf.float32)
             b = tf.constant(0, shape=vector_sequence.shape, dtype=tf.float32)
 
-            # import pdb
-            # pdb.set_trace()
             uni_mask = tf.Variable(tf.random.uniform(tf.shape(vector_sequence), minval=0, maxval=1, dtype=tf.float32, seed=self.dropout))
             bernoulli_mask = tf.where(tf.greater_equal(uni_mask, self.dropout), a, b)
             # bernoulli_mask = tf.map_fn(lambda x: tf.cond(x >= self.dropout, lambda x: 1, lambda x: 0), uni_mask)
@@ -122,6 +113,9 @@ class DanSequenceToVector(SequenceToVector):
             # bernoulli_mask = tf.reshape(bernoulli_mask, vector_sequence)
 
             inputs = tf.multiply(vector_sequence, bernoulli_mask)
+            # import pdb
+            # pdb.set_trace()
+            inputs = tf.multiply(inputs, tf.expand_dims(sequence_mask, 2))
         else:
             inputs = vector_sequence
 
@@ -133,14 +127,6 @@ class DanSequenceToVector(SequenceToVector):
 
         combined_vector = tf.nn.softmax(h)
         layer_representations = h
-
-        # print("DAN call finished")
-        # free_layer = tf.keras.layers.Dense(units, activation='relu')
-
-        # Nonlinear transformation/ReLU
-        # num_layers --> feedforward layers (number of h's to compute)?
-        # for i in range(1, num_layers):
-            # layer_h = tf.keras.layers.Dense(free_layer_units, activation='relu')
 
         # TODO(students): end
         return {"combined_vector": combined_vector, "layer_representations": layer_representations}
@@ -168,7 +154,7 @@ class GruSequenceToVector(SequenceToVector):
 
         self.gru_layers = []
         for i in range(0, num_layers):
-            gru_layers.append(tf.keras.layers.GRU(input_dim, activation='tanh', return_state=True, return_sequences=True))
+            self.gru_layers.append(tf.keras.layers.GRU(input_dim, activation='tanh', return_state=True, return_sequences=True))
         # TODO(students): end
 
     def call(self,
@@ -177,14 +163,17 @@ class GruSequenceToVector(SequenceToVector):
              training=False) -> tf.Tensor:
         # TODO(students): start
         if training:
-            sequence_mask_2 = tf.reshape(sequence_mask, tf.shape(vector_sequence))
-            inputs = tf.multiply(vector_sequence, sequence_mask)
+            sequence_mask_2 = tf.expand_dims(sequence_mask, 2)
+            inputs = tf.multiply(vector_sequence, sequence_mask_2)
         else:
             inputs = vector_sequence
 
-        h = inputs
+        h = inputs[2][-1]
         for g in self.gru_layers:
-            h = g(h)
+            h = g(h[2][-1])
+
+        combined_vector = tf.nn.softmax(h)
+        layer_representations = h
 
         # TODO(students): end
         return {"combined_vector": combined_vector,
