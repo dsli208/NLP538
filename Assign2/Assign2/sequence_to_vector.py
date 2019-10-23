@@ -113,13 +113,14 @@ class DanSequenceToVector(SequenceToVector):
             # bernoulli_mask = tf.reshape(bernoulli_mask, vector_sequence)
 
             inputs = tf.multiply(vector_sequence, bernoulli_mask)
-            # import pdb
-            # pdb.set_trace()
+
             inputs = tf.multiply(inputs, tf.expand_dims(sequence_mask, 2))
         else:
             inputs = vector_sequence
 
         # Get average
+        # import pdb
+        # pdb.set_trace()
         h = tf.reduce_mean(inputs, axis=1) # avg
 
         for d in self.dense_layers:
@@ -153,8 +154,9 @@ class GruSequenceToVector(SequenceToVector):
         self.num_layers = num_layers
 
         self.gru_layers = []
-        for i in range(0, num_layers):
+        for i in range(0, num_layers - 1):
             self.gru_layers.append(tf.keras.layers.GRU(input_dim, activation='tanh', return_state=True, return_sequences=True))
+        self.gru_layers.append(tf.keras.layers.GRU(input_dim, activation='tanh', return_state=False, return_sequences=False))
         # TODO(students): end
 
     def call(self,
@@ -168,11 +170,15 @@ class GruSequenceToVector(SequenceToVector):
         else:
             inputs = vector_sequence
 
-        h = inputs[2][-1]
-        for g in self.gru_layers:
-            h = g(h[2][-1])
 
-        combined_vector = tf.nn.softmax(h)
+        h = inputs
+        for g in self.gru_layers:
+            h = g(h)
+
+        # import pdb
+        # pdb.set_trace()
+
+        combined_vector = h
         layer_representations = h
 
         # TODO(students): end
