@@ -156,7 +156,7 @@ class GruSequenceToVector(SequenceToVector):
         self.gru_layers = []
         for i in range(0, num_layers - 1):
             self.gru_layers.append(tf.keras.layers.GRU(input_dim, activation='tanh', return_state=True, return_sequences=True))
-        self.gru_layers.append(tf.keras.layers.GRU(input_dim, activation='tanh', return_state=False, return_sequences=False))
+        self.gru_layers.append(tf.keras.layers.GRU(input_dim, activation='tanh', return_state=True, return_sequences=False))
         # TODO(students): end
 
     def call(self,
@@ -164,21 +164,24 @@ class GruSequenceToVector(SequenceToVector):
              sequence_mask: tf.Tensor,
              training=False) -> tf.Tensor:
         # TODO(students): start
-        if training:
-            sequence_mask_2 = tf.expand_dims(sequence_mask, 2)
-            inputs = tf.multiply(vector_sequence, sequence_mask_2)
-        else:
-            inputs = vector_sequence
-
-
+        # if training:
+            # sequence_mask_2 = tf.expand_dims(sequence_mask, 2)
+            # inputs = tf.multiply(vector_sequence, sequence_mask_2)
+        # else:
+            # inputs = vector_sequence
+        layer_representations_list = []
+        sequence_mask_2 = tf.expand_dims(sequence_mask, 2)
+        inputs = tf.multiply(vector_sequence, sequence_mask_2)
         h = inputs
         for g in self.gru_layers:
-            h = g(h)
+            # h = tf.expand_dims(h[0], [1])
+            # import pdb
+            # pdb.set_trace()
+            h = g(h, mask=sequence_mask_2)
+            layer_representations_list.append(h)
 
-        # import pdb
-        # pdb.set_trace()
 
-        combined_vector = h
+        combined_vector = layer_representations_list[-1][0]
         layer_representations = h
 
         # TODO(students): end

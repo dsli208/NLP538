@@ -60,6 +60,7 @@ class ProbingClassifier(models.Model):
         # import pdb
         # pdb.set_trace()
         logits = layer_representations['logits']
+        # logits = layer_representations['layer_representations'][0][self._layer_num]
 
         # TODO(students): end
         return {"logits": logits}
