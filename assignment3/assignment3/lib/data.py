@@ -128,6 +128,9 @@ def get_configuration_features(configuration: Configuration,
     features = []
 
     # Get TOP 3 from both stack and buffer
+    print(configuration.get_stack(0))
+    print(configuration.get_stack(1))
+    print(configuration.get_stack(2))
     stack_top_1 = configuration.get_stack(0)
     stack_top_2 = configuration.get_stack(1)
     stack_top_3 = configuration.get_stack(2)
@@ -160,6 +163,7 @@ def get_configuration_features(configuration: Configuration,
     pos_ids = []
     label_ids = []
 
+    print(tokens)
     # Get all the Word ID's
     for t in tokens:
         word_ids.append(vocabulary.get_word_id(t))
@@ -169,8 +173,11 @@ def get_configuration_features(configuration: Configuration,
         pos_ids.append(vocabulary.get_pos_id(t))
 
     # Get all the Label ID's
-    for t in tokens:
-        label_ids.append(vocabulary.get_label_id(t))
+    for i in range(6, len(tokens)):
+        print(tokens[i])
+        label_ids.append(vocabulary.get_label_id(tokens[i]))
+
+    features = word_ids.extend(pos_ids + label_ids)
 
     # TODO(Students) End
 

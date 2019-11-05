@@ -24,7 +24,8 @@ class CubicActivation(layers.Layer):
         """
         # TODO(Students) Start
         # Comment the next line after implementing call.
-        raise NotImplementedError
+        return tf.pow(vector, 3)
+        # raise NotImplementedError
         # TODO(Students) End
 
 
@@ -52,7 +53,7 @@ class DependencyParser(models.Model):
 
         Parameters
         ----------
-        embedding_dim : ``str``
+        embedding_dim : ``int``
             Dimension of word embeddings
         vocab_size : ``int``
             Number of words in the vocabulary.
@@ -82,6 +83,15 @@ class DependencyParser(models.Model):
 
         # Trainable Variables
         # TODO(Students) Start
+        # Biases, weights
+        # Defaults for embeddings
+        # Define a matrix that's the shape that you need for the multiplication with inputs
+        self.biases = tf.Variable(tf.random.truncated_normal(hidden_dim), trainable=True)
+        self.weights1 = tf.Variable(tf.random.truncated_normal(num_tokens * embedding_dim, hidden_dim), trainable=True) # tokens (features) * embedding_dim, hidden_dim
+        self.weights2 = tf.Variable(tf.random.truncated_normal(num_transitions, hidden_dim), trainable=True)
+        self.embed_array  = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim), trainable=True)
+        # Embeddings = tf.nn.embedding_lookup
+        # Generate them = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim))
 
         # TODO(Students) End
 
@@ -115,6 +125,12 @@ class DependencyParser(models.Model):
 
         """
         # TODO(Students) Start
+        embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [embedding_dim, num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
+        print("Model called")
+
+        x = tf.add(tf.matmul(self.weights1, tf.transpose(embeddings)), self.biases)
+        h = self._activation(x)
+        logits = tf.add(tf.matmul(self.weights2, h), self.biases)
 
         # TODO(Students) End
         output_dict = {"logits": logits}

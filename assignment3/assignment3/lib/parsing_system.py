@@ -107,7 +107,7 @@ class ParsingSystem:
             top1 = configuration.getStack(0)
             top2 = configuration.getStack(1)
 
-            configuration.remove_second_top_stack()
+            # configuration.remove_second_top_stack()
 
             label = transition[2:-1]
 
@@ -116,7 +116,7 @@ class ParsingSystem:
             top1 = configuration.getStack(0)
             top2 = configuration.getStack(1)
 
-            configuration.remove_top_stack()
+            # configuration.remove_top_stack()
 
             label = transition[2: -1]
 
