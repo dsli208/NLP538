@@ -83,13 +83,22 @@ class DependencyParser(models.Model):
 
         # Trainable Variables
         # TODO(Students) Start
+
+        self.embedding_dim = embedding_dim
+        self.vocab_size = vocab_size
+        self.num_tokens = num_tokens
+        self.hidden_dim = hidden_dim
+        self.num_transitions = num_transitions
+        self.regularization_lambda = regularization_lambda
+        self.trainable_embeddings = trainable_embeddings
+
         # Biases, weights
         # Defaults for embeddings
         # Define a matrix that's the shape that you need for the multiplication with inputs
-        self.biases = tf.Variable(tf.random.truncated_normal(hidden_dim), trainable=True)
-        self.weights1 = tf.Variable(tf.random.truncated_normal(num_tokens * embedding_dim, hidden_dim), trainable=True) # tokens (features) * embedding_dim, hidden_dim
-        self.weights2 = tf.Variable(tf.random.truncated_normal(num_transitions, hidden_dim), trainable=True)
-        self.embed_array  = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim), trainable=True)
+        self.biases = tf.Variable(tf.random.truncated_normal([hidden_dim, 1]), trainable=True)
+        self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim]), trainable=True) # tokens (features) * embedding_dim, hidden_dim
+        self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim]), trainable=True)
+        self.embed_array  = tf.Variable(tf.random.truncated_normal([vocab_size, embedding_dim]), trainable=True)
         # Embeddings = tf.nn.embedding_lookup
         # Generate them = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim))
 
@@ -124,13 +133,16 @@ class DependencyParser(models.Model):
             be computed and set to ``loss`` key in the output dictionary.
 
         """
+        # import pdb; pdb.set_trace()
         # TODO(Students) Start
-        embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [embedding_dim, num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
+        # vocab x embedding
+        embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens])
+        # embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim, self.num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
         print("Model called")
 
-        x = tf.add(tf.matmul(self.weights1, tf.transpose(embeddings)), self.biases)
+        x = tf.add(tf.matmul(self.weights1, embeddings, transpose_a=False, transpose_b=True), self.biases)
         h = self._activation(x)
-        logits = tf.add(tf.matmul(self.weights2, h), self.biases)
+        logits = tf.matmul(self.weights2, h)
 
         # TODO(Students) End
         output_dict = {"logits": logits}

@@ -42,7 +42,7 @@ class ParsingSystem:
 
         # Put the ROOT node on the stack
         configuration.stack.append(0)
-
+        # print(configuration.stack)
         return configuration
 
     def is_terminal(self, configuration: Configuration) -> bool:
@@ -104,25 +104,27 @@ class ParsingSystem:
         """
         # TODO(Students) Start
         if transition.startswith("L"): # Left reduce
-            top1 = configuration.getStack(0)
-            top2 = configuration.getStack(1)
+            top1 = configuration.get_stack(0)
+            top2 = configuration.get_stack(1)
 
-            # configuration.remove_second_top_stack()
+            configuration.remove_second_top_stack()
 
             label = transition[2:-1]
 
             configuration.add_arc(top1, top2, label)
         elif transition.startswith("R"):
-            top1 = configuration.getStack(0)
-            top2 = configuration.getStack(1)
+            top1 = configuration.get_stack(0)
+            top2 = configuration.get_stack(1)
 
-            # configuration.remove_top_stack()
+            configuration.remove_top_stack()
 
             label = transition[2: -1]
 
             configuration.add_arc(top2, top1, label)
         else: # "S"
             configuration.shift()
+
+        return configuration
         # TODO(Students) End
 
     def num_transitions(self) -> int:

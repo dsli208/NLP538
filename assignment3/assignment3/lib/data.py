@@ -94,6 +94,7 @@ def generate_training_instances(parsing_system: ParsingSystem,
     for i in tqdm(range(len(sentences))):
         if trees[i].is_projective():
             c = parsing_system.initial_configuration(sentences[i])
+            # print("c created")
             while not parsing_system.is_terminal(c):
                 oracle = parsing_system.get_oracle(c, trees[i])
                 feature = get_configuration_features(c, vocabulary)
@@ -128,9 +129,9 @@ def get_configuration_features(configuration: Configuration,
     features = []
 
     # Get TOP 3 from both stack and buffer
-    print(configuration.get_stack(0))
-    print(configuration.get_stack(1))
-    print(configuration.get_stack(2))
+    # print(configuration.get_stack(0))
+    # print(configuration.get_stack(1))
+    # print(configuration.get_stack(2))
     stack_top_1 = configuration.get_stack(0)
     stack_top_2 = configuration.get_stack(1)
     stack_top_3 = configuration.get_stack(2)
@@ -163,21 +164,25 @@ def get_configuration_features(configuration: Configuration,
     pos_ids = []
     label_ids = []
 
-    print(tokens)
+    # print(tokens)
     # Get all the Word ID's
     for t in tokens:
-        word_ids.append(vocabulary.get_word_id(t))
+        # print(t)
+        word_ids.append(vocabulary.get_word_id(configuration.get_word(t)))
 
     # Get all the Position ID's
     for t in tokens:
-        pos_ids.append(vocabulary.get_pos_id(t))
+        # print(t)
+        pos_ids.append(vocabulary.get_pos_id(configuration.get_pos(t)))
 
+    # print(word_ids)
+    # print(pos_ids)
     # Get all the Label ID's
     for i in range(6, len(tokens)):
-        print(tokens[i])
-        label_ids.append(vocabulary.get_label_id(tokens[i]))
+        # print(tokens[i])
+        label_ids.append(vocabulary.get_label_id(configuration.get_label(tokens[i])))
 
-    features = word_ids.extend(pos_ids + label_ids)
+    features = word_ids + pos_ids + label_ids
 
     # TODO(Students) End
 
