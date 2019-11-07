@@ -133,7 +133,7 @@ class DependencyParser(models.Model):
             be computed and set to ``loss`` key in the output dictionary.
 
         """
-        # import pdb; pdb.set_trace()
+        #
         # TODO(Students) Start
         # vocab x embedding
         embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens])
@@ -167,6 +167,23 @@ class DependencyParser(models.Model):
 
         """
         # TODO(Students) Start
+
+        # logits is shape 91 x 10000, labels 10000 x 91, so transpose the latter (labels)
+        labels_t = tf.transpose(labels)
+
+        # use labels to create a mask (exclude values where associated value in labels is -1, keep values that are 0 or 1)
+        a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
+        b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
+
+        label_mask = tf.where(tf.greater_equal(labels_t, 0), a, b)
+        import pdb; pdb.set_trace()
+        logits_a = tf.multiply(logits, label_mask)
+        logits_arr = tf.reduce_sum(logits_a, 1)
+        loss = tf.reduce_mean(logits_arr)
+
+        regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
+        regularization_arr = tf.reduce_sum(regularization_a, 1)
+        regularization = tf.reduce_mean(regularization_arr)
 
         # TODO(Students) End
         return loss + regularization
