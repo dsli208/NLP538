@@ -138,11 +138,14 @@ class DependencyParser(models.Model):
         # vocab x embedding
         embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens])
         # embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim, self.num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
-        print("Model called")
+        # print("Model called")
 
         x = tf.add(tf.matmul(self.weights1, embeddings, transpose_a=False, transpose_b=True), self.biases)
         h = self._activation(x)
-        logits = tf.matmul(self.weights2, h)
+        logits_a = tf.matmul(self.weights2, h)
+        logits = tf.transpose(logits_a)
+
+        # import pdb; pdb.set_trace()
 
         # TODO(Students) End
         output_dict = {"logits": logits}
@@ -176,8 +179,9 @@ class DependencyParser(models.Model):
         b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
 
         label_mask = tf.where(tf.greater_equal(labels_t, 0), a, b)
-        import pdb; pdb.set_trace()
-        logits_a = tf.multiply(logits, label_mask)
+
+        p = tf.nn.softmax(logits)
+        logits_a = tf.multiply(tf.math.log(p), label_mask)
         logits_arr = tf.reduce_sum(logits_a, 1)
         loss = tf.reduce_mean(logits_arr)
 

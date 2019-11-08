@@ -41,9 +41,13 @@ def predict(model: models.Model,
         while not parsing_system.is_terminal(configuration):
             features = get_configuration_features(configuration, vocabulary)
             features = np.array(features).reshape((1, -1))
+
             logits = model(features)["logits"].numpy()
             opt_score = -float('inf')
             opt_trans = ""
+
+            import pdb; pdb.set_trace()
+
             for j in range(num_transitions):
                 if (logits[0, j] > opt_score and
                         parsing_system.can_apply(configuration, parsing_system.transitions[j])):
