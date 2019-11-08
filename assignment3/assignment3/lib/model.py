@@ -181,7 +181,7 @@ class DependencyParser(models.Model):
         label_mask = tf.where(tf.greater_equal(labels, 0), a, b)
 
         p = tf.nn.softmax(logits)
-        logits_a = tf.multiply(tf.math.log(p), label_mask)
+        logits_a = tf.multiply(tf.math.log(p + 1.0e-10), label_mask)
         logits_arr = tf.reduce_sum(logits_a, 1)
         loss = tf.reduce_mean(logits_arr)
 
