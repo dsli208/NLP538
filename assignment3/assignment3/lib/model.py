@@ -178,7 +178,7 @@ class DependencyParser(models.Model):
         a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
         b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
 
-        label_mask = tf.where(tf.greater_equal(labels_t, 0), a, b)
+        label_mask = tf.where(tf.greater_equal(labels, 0), a, b)
 
         p = tf.nn.softmax(logits)
         logits_a = tf.multiply(tf.math.log(p), label_mask)

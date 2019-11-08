@@ -46,7 +46,7 @@ def predict(model: models.Model,
             opt_score = -float('inf')
             opt_trans = ""
 
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
 
             for j in range(num_transitions):
                 if (logits[0, j] > opt_score and
