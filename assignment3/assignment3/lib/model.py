@@ -185,9 +185,9 @@ class DependencyParser(models.Model):
         logits_arr = tf.reduce_sum(logits_a, 1)
         loss = tf.math.negative(tf.reduce_mean(logits_arr))
 
-        regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
-        regularization_arr = tf.reduce_sum(regularization_a, 1)
-        regularization = tf.reduce_mean(regularization_arr)
+        # regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
+        # regularization_arr = tf.reduce_sum(regularization_a, 1)
+        # regularization = tf.reduce_mean(regularization_arr)
 
         # TODO(Students) End
-        return loss + regularization
+        return loss # + regularization
