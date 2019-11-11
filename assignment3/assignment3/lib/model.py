@@ -185,7 +185,8 @@ class DependencyParser(models.Model):
         # logits_arr = tf.reduce_sum(logits_a, 1)
         # loss = tf.math.negative(tf.reduce_mean(logits_arr))
 
-        loss = tf.nn.softmax_cross_entropy_with_logits(label_mask, logits)
+        loss_vec = tf.nn.softmax_cross_entropy_with_logits(label_mask, logits)
+        loss = tf.reduce_mean(loss_vec)
 
         regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
         regularization_arr = tf.reduce_sum(regularization_a, 1)
