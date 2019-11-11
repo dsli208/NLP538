@@ -1,0 +1,4 @@
+*.txt filter=lfs diff=lfs merge=lfs -text
+glove.6B.50d filter=lfs diff=lfs merge=lfs -text
+assignment3/assignment3/data/glove.6B.50d filter=lfs diff=lfs merge=lfs -text
+assignment3/assignment3/data/glove.6B.50d.txt filter=lfs diff=lfs merge=lfs -text
