@@ -147,8 +147,6 @@ class DependencyParser(models.Model):
         logits_a = tf.matmul(self.weights2, h)
         logits = tf.transpose(logits_a)
 
-        # import pdb; pdb.set_trace()
-
         # TODO(Students) End
         output_dict = {"logits": logits}
 
@@ -203,6 +201,13 @@ class DependencyParser(models.Model):
         w1_loss = tf.nn.l2_loss(self.weights1)
         w2_loss = tf.nn.l2_loss(self.weights2)
         embed_loss = tf.nn.l2_loss(self.embed_array)
+
+        print(bias_loss)
+        print(w1_loss)
+        print(w2_loss)
+        print(embed_loss)
+
+        import pdb; pdb.set_trace()
 
         regularization = tf.math.add_n(bias_loss, w1_loss, w2_loss, embed_loss)
 
