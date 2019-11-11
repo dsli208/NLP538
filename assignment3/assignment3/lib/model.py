@@ -202,14 +202,11 @@ class DependencyParser(models.Model):
         w2_loss = tf.nn.l2_loss(self.weights2)
         embed_loss = tf.nn.l2_loss(self.embed_array)
 
-        print(bias_loss)
-        print(w1_loss)
-        print(w2_loss)
-        print(embed_loss)
+        loss_sum_list = [bias_loss, w1_loss, w2_loss, embed_loss]
+        
+        # import pdb; pdb.set_trace()
 
-        import pdb; pdb.set_trace()
-
-        regularization = tf.math.add_n(bias_loss, w1_loss, w2_loss, embed_loss)
+        regularization = tf.math.add_n(loss_sum_list)
 
         # TODO(Students) End
         return loss + regularization
