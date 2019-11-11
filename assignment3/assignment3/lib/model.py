@@ -142,7 +142,7 @@ class DependencyParser(models.Model):
         # embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim, self.num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
         # print("Model called")
 
-        x = tf.add(tf.matmul(self.weights1, embeddings, transpose_a=False, transpose_b=True), self.biases)
+        x = tf.add(tf.matmul(self.weights1, self.embeddings, transpose_a=False, transpose_b=True), self.biases)
         h = self._activation(x)
         logits_a = tf.matmul(self.weights2, h)
         logits = tf.transpose(logits_a)
