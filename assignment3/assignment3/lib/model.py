@@ -96,8 +96,8 @@ class DependencyParser(models.Model):
         # Defaults for embeddings
         # Define a matrix that's the shape that you need for the multiplication with inputs
         self.biases = tf.Variable(tf.random.truncated_normal([hidden_dim, 1]), trainable=True)
-        self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim]), trainable=True) # tokens (features) * embedding_dim, hidden_dim
-        self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim]), trainable=True)
+        self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim], stddev=0.05), trainable=True) # tokens (features) * embedding_dim, hidden_dim
+        self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim], stddev=0.05), trainable=True)
         self.embed_array  = tf.Variable(tf.random.truncated_normal([vocab_size, embedding_dim]), trainable=True)
         # Embeddings = tf.nn.embedding_lookup
         # Generate them = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim))
@@ -185,11 +185,11 @@ class DependencyParser(models.Model):
         # logits_arr = tf.reduce_sum(logits_a, 1)
         # loss = tf.math.negative(tf.reduce_mean(logits_arr))
 
-        loss_vec = tf.nn.softmax_cross_entropy_with_logits(label_mask, logits)
-        print(loss_vec)
+        loss_vec = tf.nn.softmax_cross_entropy_with_logits((labels >= 0) * labels, logits)
+        # print(loss_vec)
 
         loss = tf.reduce_mean(loss_vec)
-        print(loss)
+        # print(loss)
 
         regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
         regularization_arr = tf.reduce_sum(regularization_a, 1)
