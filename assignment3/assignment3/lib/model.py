@@ -137,7 +137,7 @@ class DependencyParser(models.Model):
         # TODO(Students) Start
         # vocab x embedding
         print(self.embed_array)
-        embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE
+        self.embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE
         # embeddings = tf.transpose(tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs)), [self.embedding_dim * self.num_tokens, tf.shape(inputs)[0]])
         # embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim, self.num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
         # print("Model called")
@@ -200,10 +200,10 @@ class DependencyParser(models.Model):
         bias_loss = tf.nn.l2_loss(self.biases)
         w1_loss = tf.nn.l2_loss(self.weights1)
         w2_loss = tf.nn.l2_loss(self.weights2)
-        embed_loss = tf.nn.l2_loss(self.embed_array)
+        embed_loss = tf.nn.l2_loss(self.embeddings)
 
         loss_sum_list = [bias_loss, w1_loss, w2_loss, embed_loss]
-        
+
         # import pdb; pdb.set_trace()
 
         regularization = tf.math.add_n(loss_sum_list)
