@@ -6,4 +6,3 @@ assignment3/assignment3/data/glove.6B.50d.txt filter=lfs diff=lfs merge=lfs -tex
 =======
 *.conll filter=lfs diff=lfs merge=lfs -text
 >>>>>>> 642b920fdc96f16153e44d69ac0a618ad56236bc
-assignment3/assignment3/data/train.jsonl filter=lfs diff=lfs merge=lfs -text
