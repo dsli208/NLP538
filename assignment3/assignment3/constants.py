@@ -1,4 +1,0 @@
-UNKNOWN = "UNK"
-ROOT = "ROOT"
-NULL = "NULL"
-NONEXIST = -1
