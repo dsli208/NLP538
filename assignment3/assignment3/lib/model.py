@@ -98,7 +98,7 @@ class DependencyParser(models.Model):
         self.biases = tf.Variable(tf.random.truncated_normal([hidden_dim, 1]), trainable=True)
         self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim], stddev=0.05), trainable=True) # tokens (features) * embedding_dim, hidden_dim
         self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim], stddev=0.05), trainable=True)
-        self.embed_array  = tf.Variable(tf.random.truncated_normal([vocab_size, embedding_dim]), trainable=True)
+        self.embed_array  = tf.Variable(tf.random.truncated_normal([vocab_size, embedding_dim]), trainable=trainable_embeddings)
         # Embeddings = tf.nn.embedding_lookup
         # Generate them = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim))
 
@@ -136,7 +136,9 @@ class DependencyParser(models.Model):
         #
         # TODO(Students) Start
         # vocab x embedding
-        embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens])
+        print(self.embed_array)
+        embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE
+        # embeddings = tf.transpose(tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs)), [self.embedding_dim * self.num_tokens, tf.shape(inputs)[0]])
         # embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim, self.num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
         # print("Model called")
 
@@ -175,10 +177,13 @@ class DependencyParser(models.Model):
         labels_t = tf.transpose(labels)
 
         # use labels to create a mask (exclude values where associated value in labels is -1, keep values that are 0 or 1)
-        a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
-        b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
+        # a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
+        # b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
+        a = tf.ones_like(labels)
+        b = tf.zeros_like(labels)
 
         label_mask = tf.where(tf.greater_equal(labels, 0), a, b)
+        logits_mask = tf.where(tf.greater_equal(logits, 0), a, b)
 
         # p = tf.nn.softmax(logits)
         # logits_a = tf.multiply(tf.math.log(p + 1.0e-10), label_mask)
@@ -191,9 +196,15 @@ class DependencyParser(models.Model):
         loss = tf.reduce_mean(loss_vec)
         # print(loss)
 
-        regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
-        regularization_arr = tf.reduce_sum(regularization_a, 1)
-        regularization = tf.reduce_mean(regularization_arr)
+        # regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
+        # regularization_arr = tf.reduce_sum(regularization_a, 1)
+        # regularization = tf.reduce_mean(regularization_arr)
+        bias_loss = tf.nn.l2_loss(self.biases)
+        w1_loss = tf.nn.l2_loss(self.weights1)
+        w2_loss = tf.nn.l2_loss(self.weights2)
+        embed_loss = tf.nn.l2_loss(self.embed_array)
+
+        regularization = tf.math.add_n(bias_loss, w1_loss, w2_loss, embed_loss)
 
         # TODO(Students) End
         return loss + regularization
