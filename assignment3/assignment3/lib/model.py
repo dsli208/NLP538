@@ -180,15 +180,15 @@ class DependencyParser(models.Model):
 
         label_mask = tf.where(tf.greater_equal(labels, 0), a, b)
 
-        p = tf.nn.softmax(logits)
-        logits_a = tf.multiply(tf.math.log(p + 1.0e-10), label_mask)
-        logits_arr = tf.reduce_sum(logits_a, 1)
-        loss = tf.math.negative(tf.reduce_mean(logits_arr))
+        # p = tf.nn.softmax(logits)
+        # logits_a = tf.multiply(tf.math.log(p + 1.0e-10), label_mask)
+        # logits_arr = tf.reduce_sum(logits_a, 1)
+        # loss = tf.math.negative(tf.reduce_mean(logits_arr))
 
-        # loss_vec = tf.nn.softmax_cross_entropy_with_logits((labels >= 0) * labels, logits)
+        loss_vec = tf.nn.softmax_cross_entropy_with_logits((labels >= 0) * labels, logits)
         # print(loss_vec)
 
-        # loss = tf.reduce_mean(loss_vec)
+        loss = tf.reduce_mean(loss_vec)
         # print(loss)
 
         regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
