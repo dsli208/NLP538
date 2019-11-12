@@ -183,16 +183,17 @@ class DependencyParser(models.Model):
         label_mask = tf.where(tf.greater_equal(labels, 0), a, b)
         logits_mask_1 = tf.where(tf.greater_equal(logits, 0), a, b)
         logits_mask_2 = tf.where(tf.greater_equal(labels, 1), a, b)
-        label_mask_f = tf.dtypes.cast(label_mask, tf.float32)  # [1, 2], dtype=tf.int32
+        label_mask_f = tf.dtypes.cast(label_mask, tf.float32)
         logits_mask_2f = tf.dtypes.cast(logits_mask_2, tf.float32)
 
         masked_logits = tf.multiply(logits, label_mask_f)
-        p = tf.math.log(tf.nn.softmax(masked_logits) + 1.0e-10) # include 0 and 1 labels
+        softmax = tf.nn.softmax(masked_logits)
+        p = tf.math.log(softmax + 1.0e-10) # include 0 and 1 labels
         logits_a = tf.multiply(p, logits_mask_2f)
         logits_arr = tf.reduce_sum(logits_a, 1) # ONLY include 1 label
         loss = tf.math.negative(tf.reduce_mean(logits_arr))
 
-        # loss_vec = tf.nn.softmax_cross_entropy_with_logits((labels >= 0) * labels, logits)
+        loss_vec = tf.nn.softmax_cross_entropy_with_logits((labels >= 0) * labels, logits)
         # print(loss_vec)
 
         # loss = tf.reduce_mean(loss_vec)
