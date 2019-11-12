@@ -96,8 +96,8 @@ class DependencyParser(models.Model):
         # Defaults for embeddings
         # Define a matrix that's the shape that you need for the multiplication with inputs
         self.biases = tf.Variable(tf.random.truncated_normal([hidden_dim, 1]), trainable=True)
-        self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim], stddev=0.05), trainable=True) # tokens (features) * embedding_dim, hidden_dim
-        self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim], stddev=0.05), trainable=True)
+        self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim], mean=0.0, stddev=0.05), trainable=True) # tokens (features) * embedding_dim, hidden_dim
+        self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim], mean=0.0, stddev=0.05), trainable=True)
         self.embed_array  = tf.Variable(tf.random.truncated_normal([vocab_size, embedding_dim]), trainable=trainable_embeddings)
         # Embeddings = tf.nn.embedding_lookup
         # Generate them = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim))
@@ -137,10 +137,10 @@ class DependencyParser(models.Model):
         # TODO(Students) Start
         # vocab x embedding
         # print(self.embed_array)
-        self.embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE
-        # embeddings = tf.transpose(tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs)), [self.embedding_dim * self.num_tokens, tf.shape(inputs)[0]])
+        self.embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE # KEEP LINE
+        # self.embeddings = tf.transpose(tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim * self.num_tokens, tf.shape(inputs)[0]]))
         # embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim, self.num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
-        # print("Model called")
+        # import pdb; pdb.set_trace()
 
         x = tf.add(tf.matmul(self.weights1, self.embeddings, transpose_a=False, transpose_b=True), self.biases)
         h = self._activation(x)
@@ -175,10 +175,10 @@ class DependencyParser(models.Model):
         labels_t = tf.transpose(labels)
 
         # use labels to create a mask (exclude values where associated value in labels is -1, keep values that are 0 or 1)
-        # a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
-        # b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
-        a = tf.ones_like(labels)
-        b = tf.zeros_like(labels)
+        a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
+        b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
+        # a = tf.ones_like(labels)
+        # b = tf.zeros_like(labels)
 
         label_mask = tf.where(tf.greater_equal(labels, 0), a, b)
         logits_mask_1 = tf.where(tf.greater_equal(logits, 0), a, b)
@@ -186,10 +186,9 @@ class DependencyParser(models.Model):
         label_mask_f = tf.dtypes.cast(label_mask, tf.float32)  # [1, 2], dtype=tf.int32
         logits_mask_2f = tf.dtypes.cast(logits_mask_2, tf.float32)
 
-
         masked_logits = tf.multiply(logits, label_mask_f)
-        p = tf.nn.softmax(masked_logits) # include 0 and 1 labels
-        logits_a = tf.multiply(tf.math.log(p + 1.0e-10), logits_mask_2f)
+        p = tf.math.log(tf.nn.softmax(masked_logits) + 1.0e-10) # include 0 and 1 labels
+        logits_a = tf.multiply(p, logits_mask_2f)
         logits_arr = tf.reduce_sum(logits_a, 1) # ONLY include 1 label
         loss = tf.math.negative(tf.reduce_mean(logits_arr))
 
@@ -199,20 +198,20 @@ class DependencyParser(models.Model):
         # loss = tf.reduce_mean(loss_vec)
         # print(loss)
 
-        regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
-        regularization_arr = tf.reduce_sum(regularization_a, 1)
-        regularization = tf.reduce_mean(regularization_arr)
+        # regularization_a = tf.multiply(self.regularization_lambda, self.weights1)
+        # regularization_arr = tf.reduce_sum(regularization_a, 1)
+        # regularization = tf.reduce_mean(regularization_arr)
 
-        # bias_loss = tf.nn.l2_loss(self.biases)
-        # w1_loss = tf.nn.l2_loss(self.weights1)
-        # w2_loss = tf.nn.l2_loss(self.weights2)
-        # embed_loss = tf.nn.l2_loss(self.embeddings)
+        bias_loss = tf.nn.l2_loss(self.biases)
+        w1_loss = tf.nn.l2_loss(self.weights1)
+        w2_loss = tf.nn.l2_loss(self.weights2)
+        embed_loss = tf.nn.l2_loss(self.embeddings)
 
-        # loss_sum_list = [bias_loss, w1_loss, w2_loss, embed_loss]
+        loss_sum_list = [bias_loss, w1_loss, w2_loss, embed_loss]
+
+        regularization = self._regularization_lambda * tf.math.add_n(loss_sum_list)
 
         # import pdb; pdb.set_trace()
-
-        # regularization = self._regularization_lambda * tf.math.add_n(loss_sum_list)
 
         # TODO(Students) End
         return loss + regularization
