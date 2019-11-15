@@ -97,8 +97,8 @@ class DependencyParser(models.Model):
         # Define a matrix that's the shape that you need for the multiplication with inputs
         stddev = math.sqrt(1/num_transitions)
         self.biases = tf.Variable(tf.random.truncated_normal([hidden_dim, 1]), trainable=True)
-        self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim], mean=0.0, stddev=0.03), trainable=True) # tokens (features) * embedding_dim, hidden_dim
-        self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim], mean=0.0, stddev=0.03), trainable=True)
+        self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim], mean=0.0, stddev=0.05), trainable=True) # tokens (features) * embedding_dim, hidden_dim
+        self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim], mean=0.0, stddev=0.05), trainable=True)
         self.embeddings  = tf.Variable(tf.random.truncated_normal([vocab_size, embedding_dim]), trainable=trainable_embeddings, dtype=tf.float32)
         # Embeddings = tf.nn.embedding_lookup
         # Generate them = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim))
@@ -196,7 +196,7 @@ class DependencyParser(models.Model):
 
         # Softmax will return probability matrix ... remask based on label values
         p = tf.math.negative(tf.math.log(softmax + 1.0e-10)) # include 0 and 1 labels
-        logits_a = tf.multiply(p, tf_zero_mask)
+        logits_a = tf.multiply(p, tf_zero_mask) # mask again to remove non-zero values produced by softmax
         logits_arr = tf.reduce_sum(logits_a, 1) # ONLY include 1 label
         loss = tf.reduce_mean(logits_arr)
 
@@ -208,8 +208,6 @@ class DependencyParser(models.Model):
         loss_sum_list = [bias_loss, w1_loss, w2_loss, embed_loss]
 
         regularization = self._regularization_lambda * tf.math.add_n(loss_sum_list)
-
-
 
         # TODO(Students) End
         return loss + regularization
