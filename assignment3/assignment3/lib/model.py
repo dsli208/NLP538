@@ -198,13 +198,6 @@ class DependencyParser(models.Model):
 
         loss = tf.subtract(feasible_transitions_log, correct_transitions_log)
 
-        new_l = []
-        for l in labels:
-            new_l.append(np.argmax(l))
-
-        loss_vec = tf.nn.sparse_softmax_cross_entropy_with_logits(new_l, feasible_transitions)
-        loss = tf.reduce_mean(loss_vec)
-
         # Compute REGULARIZATION - Get l2 loss over all biases, weights, and embeddings
         bias_loss = tf.nn.l2_loss(self.biases)
         bias2_loss = tf.nn.l2_loss(self.biases2)
