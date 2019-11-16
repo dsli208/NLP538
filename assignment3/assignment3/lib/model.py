@@ -133,7 +133,7 @@ class DependencyParser(models.Model):
         """
         #
         # TODO(Students) Start
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         embeddings = tf.reshape(tf.nn.embedding_lookup(self.embeddings, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE # embedding dim x num tokens x batch size
 
         x = tf.add(tf.matmul(self.weights1, embeddings, transpose_a=False, transpose_b=True), self.biases)
