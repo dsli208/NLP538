@@ -3,6 +3,7 @@ from typing import Dict
 import math
 
 # external libs
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import models, layers
 
@@ -168,7 +169,6 @@ class DependencyParser(models.Model):
         a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
         b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
         c = tf.constant(-999999, shape=logits.shape, dtype=tf.float32)
-        # import pdb; pdb.set_trace()
 
         # Label_mask is applied for labels geq 0
         feasible_mask = tf.where(tf.greater_equal(labels, 0), a, b)
@@ -177,23 +177,33 @@ class DependencyParser(models.Model):
         # Apply masks accordingly - first mask label values less than 0, then values less than 1
         feasible_transitions = tf.multiply(logits, feasible_mask)
         correct_transitions = tf.multiply(feasible_transitions, correct_mask)
-        tf_zero_mask = tf.where(tf.equal(correct_transitions, 0), b, a)
 
+        # Do sigma (reduce sum)
         x = tf.reduce_sum(correct_transitions)
         y = tf.reduce_sum(feasible_transitions)
-
+        # ... then take the mean of the sums
         x = tf.reduce_mean(correct_transitions)
         y = tf.reduce_mean(feasible_transitions)
 
+        # Get e^x and e^y (for correct and feasible transitions respectively)
         e_x = tf.math.exp(x)
         e_y = tf.math.exp(y)
 
-        feasible_sum = tf.add(e_x, e_y)
+        # loss = -log(e^x / (e^x + e^y)) = -(log(e^x) - log(e^x + e^y))
+        feasible_sum = tf.add(e_x, e_y) # e^x + e^y
 
+        # loss = -(log(e^x) - log(feasible)) = log(feasible - log(e^x))
         feasible_transitions_log = tf.math.log(feasible_sum)
         correct_transitions_log = tf.math.log(e_x)
 
         loss = tf.subtract(feasible_transitions_log, correct_transitions_log)
+
+        new_l = []
+        for l in labels:
+            new_l.append(np.argmax(l))
+
+        loss_vec = tf.nn.sparse_softmax_cross_entropy_with_logits(new_l, feasible_transitions)
+        loss = tf.reduce_mean(loss_vec)
 
         # Compute REGULARIZATION - Get l2 loss over all biases, weights, and embeddings
         bias_loss = tf.nn.l2_loss(self.biases)
