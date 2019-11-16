@@ -92,16 +92,13 @@ class DependencyParser(models.Model):
         self.regularization_lambda = regularization_lambda
         self.trainable_embeddings = trainable_embeddings
 
-        # Biases, weights
-        # Defaults for embeddings
-        # Define a matrix that's the shape that you need for the multiplication with inputs
+        # Define input and output sets of biases and weights, as well as embeddings to be looked up
         stddev = math.sqrt(1/num_transitions)
         self.biases = tf.Variable(tf.random.truncated_normal([hidden_dim, 1]), trainable=True)
+        self.biases2 = tf.Variable(tf.random.truncated_normal([num_transitions, 1]))
         self.weights1 = tf.Variable(tf.random.truncated_normal([hidden_dim, num_tokens * embedding_dim], mean=0.0, stddev=0.05), trainable=True) # tokens (features) * embedding_dim, hidden_dim
         self.weights2 = tf.Variable(tf.random.truncated_normal([num_transitions, hidden_dim], mean=0.0, stddev=0.05), trainable=True)
         self.embeddings  = tf.Variable(tf.random.truncated_normal([vocab_size, embedding_dim]), trainable=trainable_embeddings, dtype=tf.float32)
-        # Embeddings = tf.nn.embedding_lookup
-        # Generate them = tf.Variable(tf.random.truncated_normal(vocab_size, embedding_dim))
 
         # TODO(Students) End
 
@@ -136,15 +133,12 @@ class DependencyParser(models.Model):
         """
         #
         # TODO(Students) Start
-        # vocab x embedding
-        # import pdb; pdb.set_trace()
-        train_embeddings = tf.reshape(tf.nn.embedding_lookup(self.embeddings, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE # KEEP LINE
-        # self.embeddings = tf.transpose(tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim * self.num_tokens, tf.shape(inputs)[0]]))
-        # embeddings = tf.reshape(tf.nn.embedding_lookup(self.embed_array, inputs), [self.embedding_dim, self.num_tokens, tf.shape(inputs)[0]]) # embedding dim x num tokens x batch size
+        import pdb; pdb.set_trace()
+        embeddings = tf.reshape(tf.nn.embedding_lookup(self.embeddings, inputs), [tf.shape(inputs)[0], self.embedding_dim * self.num_tokens]) # KEEP LINE # embedding dim x num tokens x batch size
 
-        x = tf.add(tf.matmul(self.weights1, train_embeddings, transpose_a=False, transpose_b=True), self.biases)
+        x = tf.add(tf.matmul(self.weights1, embeddings, transpose_a=False, transpose_b=True), self.biases)
         h = self._activation(x)
-        logits_a = tf.matmul(self.weights2, h)
+        logits_a = tf.add(tf.matmul(self.weights2, h), self.biases2)
         logits = tf.transpose(logits_a)
 
         # TODO(Students) End
@@ -171,42 +165,47 @@ class DependencyParser(models.Model):
         """
         # TODO(Students) Start
 
-        # logits is shape 91 x 10000, labels 10000 x 91, so transpose the latter (labels)
-        # use labels to create a mask (exclude values where associated value in labels is -1, keep values that are 0 or 1)
         a = tf.constant(1, shape=logits.shape, dtype=tf.float32)
         b = tf.constant(0, shape=logits.shape, dtype=tf.float32)
         c = tf.constant(-999999, shape=logits.shape, dtype=tf.float32)
         # import pdb; pdb.set_trace()
 
         # Label_mask is applied for labels geq 0
-        label_mask = tf.where(tf.greater_equal(labels, 0), a, b)
-        logits_mask_2 = tf.where(tf.greater_equal(labels, 1), a, b)
-
-        # Cast masks to tf.float?
-        label_mask_f = tf.dtypes.cast(label_mask, tf.float32)
-        logits_mask_2f = tf.dtypes.cast(logits_mask_2, tf.float32)
+        feasible_mask = tf.where(tf.greater_equal(labels, 0), a, b)
+        correct_mask = tf.where(tf.greater_equal(labels, 1), a, b)
 
         # Apply masks accordingly - first mask label values less than 0, then values less than 1
-        masked_logits_a = tf.multiply(logits, label_mask)
-        masked_logits = tf.multiply(masked_logits_a, logits_mask_2)
-        tf_zero_mask = tf.where(tf.equal(masked_logits, 0), b, a)
+        feasible_transitions = tf.multiply(logits, feasible_mask)
+        correct_transitions = tf.multiply(feasible_transitions, correct_mask)
+        tf_zero_mask = tf.where(tf.equal(correct_transitions, 0), b, a)
 
-        # Take softmax ---> maybe implement custom softmax function here instead?
-        softmax = tf.nn.softmax(masked_logits)
+        x = tf.reduce_sum(correct_transitions)
+        y = tf.reduce_sum(feasible_transitions)
 
-        # Softmax will return probability matrix ... remask based on label values
-        p = tf.math.negative(tf.math.log(softmax + 1.0e-10)) # include 0 and 1 labels
-        logits_a = tf.multiply(p, tf_zero_mask) # mask again to remove non-zero values produced by softmax
-        logits_arr = tf.reduce_sum(logits_a, 1) # ONLY include 1 label
-        loss = tf.reduce_mean(logits_arr)
+        x = tf.reduce_mean(correct_transitions)
+        y = tf.reduce_mean(feasible_transitions)
 
+        e_x = tf.math.exp(x)
+        e_y = tf.math.exp(y)
+
+        feasible_sum = tf.add(e_x, e_y)
+
+        feasible_transitions_log = tf.math.log(feasible_sum)
+        correct_transitions_log = tf.math.log(e_x)
+
+        loss = tf.subtract(feasible_transitions_log, correct_transitions_log)
+
+        # Compute REGULARIZATION - Get l2 loss over all biases, weights, and embeddings
         bias_loss = tf.nn.l2_loss(self.biases)
+        bias2_loss = tf.nn.l2_loss(self.biases2)
         w1_loss = tf.nn.l2_loss(self.weights1)
         w2_loss = tf.nn.l2_loss(self.weights2)
         embed_loss = tf.nn.l2_loss(self.embeddings)
 
+        # SUM l2 loss over all biases, weights, and embeddings
         loss_sum_list = [bias_loss, w1_loss, w2_loss, embed_loss]
 
+        # Multiply by lambda
         regularization = self._regularization_lambda * tf.math.add_n(loss_sum_list)
 
         # TODO(Students) End
