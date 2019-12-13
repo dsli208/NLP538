@@ -75,7 +75,7 @@ You have 4 main scripts in the repository `train_basic.py`, `train_advanced.py`,
 
 #### Train a model
 ```
-python train.py --embed-file embeddings/glove.6B.100D.txt --embed-dim 100 --batch-size 10 --num_epochs 5
+python train.py --embed-file data/glove.6B.100D.txt --embed-dim 100 --batch-size 10 --epochs 5
 
 # stores the model by default at : serialization_dirs/basic/
 ```
