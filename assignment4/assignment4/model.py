@@ -23,7 +23,7 @@ class MyBasicAttentiveBiGRU(models.Model):
     def attn(self, rnn_outputs):
         ### TODO(Students) START
         # Literally just wrapping a GRU layer
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         tanh_layer = tf.keras.activations.tanh
         m = tanh_layer(rnn_outputs)
         # softmax_input = tf.multiply(tf.transpose(self.omegas), m)
@@ -54,7 +54,7 @@ class MyBasicAttentiveBiGRU(models.Model):
 
 class MyAdvancedModel(models.Model):
 
-    def __init__(self, vocab_size: int, embed_dim: int, hidden_size: int):
+    def __init__(self, vocab_size: int, embed_dim: int, hidden_size: int = 128, training: bool=False):
         super(MyAdvancedModel, self).__init__()
         ### TODO(Students) START
         self.num_classes = len(ID_TO_CLASS)
