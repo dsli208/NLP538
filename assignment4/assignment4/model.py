@@ -23,7 +23,7 @@ class MyBasicAttentiveBiGRU(models.Model):
     def attn(self, rnn_outputs):
         ### TODO(Students) START
         # Literally just wrapping a GRU layer
-        # import pdb; pdb.set_trace()
+
         tanh_layer = tf.keras.activations.tanh
         m = tanh_layer(rnn_outputs)
         # softmax_input = tf.multiply(tf.transpose(self.omegas), m)
@@ -43,8 +43,17 @@ class MyBasicAttentiveBiGRU(models.Model):
         pos_embed = tf.nn.embedding_lookup(self.embeddings, pos_inputs)
 
         ### TODO(Students) START
+
+        # embed_combined = word_embed
         embed_combined = tf.concat([word_embed, pos_embed], 1)
-        rnn_outputs = self.bidirectional(embed_combined)
+
+        if training:
+            sing_mask = tf.not_equal(inputs, 0)
+            mask = tf.concat([sing_mask, sing_mask], 1)
+        else:
+            mask = None
+
+        rnn_outputs = self.bidirectional(embed_combined, mask=mask)
         attention = self.attn(rnn_outputs)
         logits = self.decoder(attention)
         ### TODO(Students) END
@@ -63,6 +72,7 @@ class MyAdvancedModel(models.Model):
         self.forward_layer = tf.keras.layers.GRU(hidden_size, activation='tanh', return_sequences=True)
         self.backward_layer = tf.keras.layers.GRU(hidden_size, activation='tanh', return_sequences=True)
         self.combined_layer = tf.keras.layers.GRU(hidden_size, activation='tanh')
+        self.bidirectional = tf.keras.layers.Bidirectional(self.combined_layer)
         ### TODO(Students END
 
     def call(self, inputs, pos_inputs, training):
@@ -72,10 +82,16 @@ class MyAdvancedModel(models.Model):
 
         embed_combined = tf.concat([word_embed, pos_embed], 1)
 
+        if training:
+            sing_mask = tf.not_equal(inputs, 0)
+            mask = tf.concat([sing_mask, sing_mask], 1)
+        else:
+            mask = None
+
         forward = self.forward_layer(embed_combined)
         backward = self.backward_layer(embed_combined)
         output_sum_input = tf.add(forward, backward)
-        output_sum = self.combined_layer(output_sum_input)
+        output_sum = self.bidirectional(output_sum_input, mask=mask)
 
         logits = self.decoder(output_sum)
 

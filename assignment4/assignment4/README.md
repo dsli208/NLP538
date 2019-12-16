@@ -82,7 +82,7 @@ python train.py --embed-file data/glove.6B.100D.txt --embed-dim 100 --batch-size
 
 #### Predict with model
 ```
-python predict.py --prediction-file my_predictions.txt --batch-size 10
+python predict.py --load-serialization-dir ./serialization_dirs/advanced/ --prediction-file ./predictions/advanced.txt --batch-size 10
 ```
 
 **NOTE:** These scripts will not work until you fill-up the placeholders (TODOs) left out as part of the assignment.
