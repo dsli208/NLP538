@@ -29,7 +29,7 @@ def train(model, optimizer, train_instances, validation_instances, num_epochs, b
                 logits = model(**batch_inputs, training=True)['logits']
                 loss_val = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=batch_labels)
                 ### TODO(student) START
-                regularization = 0.00001 * tf.reduce_mean([tf.nn.l2_loss(t) for t in model.trainable_variables])
+                regularization = 0.00001 * tf.reduce_sum([tf.nn.l2_loss(t) for t in model.trainable_variables])
                 ### TODO(Student) END
                 loss_val += regularization
                 grads = tape.gradient(loss_val, model.trainable_variables)
